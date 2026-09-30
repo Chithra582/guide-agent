@@ -1,0 +1,14 @@
+name: "tls-cert-boundary-validator"
+description: "Verifies SSL/TLS certificates and ensures file operations stay within allowed_directories."
+input_schema:
+  type: "object"
+  properties:
+    file_path:
+      type: "string"
+      description: "Target file path to validate."
+    operation:
+      type: "string"
+      description: "Requested file operation (read, write, inspect_cert)."
+  required:
+    - "file_path"
+    - "operation"

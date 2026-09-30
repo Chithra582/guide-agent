@@ -1,0 +1,16 @@
+name: "nginx-process-controller"
+description: "Triggers process start, stop, reload, and signals (HUP, QUIT)."
+input_schema:
+  type: "object"
+  properties:
+    action:
+      type: "string"
+      description: "Lifecycle action to perform (reload, restart, stop, status)."
+    signal:
+      type: "string"
+      description: "Optional explicit POSIX signal (SIGHUP, SIGQUIT, SIGTERM)."
+    timeout_seconds:
+      type: "integer"
+      description: "Timeout limit for process status transition."
+  required:
+    - "action"

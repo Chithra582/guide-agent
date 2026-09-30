@@ -1,0 +1,13 @@
+name: "config-syntax-verifier"
+description: "Performs syntax verification on candidate NGINX configs before applying reloads."
+input_schema:
+  type: "object"
+  properties:
+    config_file_path:
+      type: "string"
+      description: "Absolute path to primary NGINX configuration file."
+    test_binary:
+      type: "string"
+      description: "Path to NGINX executable to invoke for syntax check."
+  required:
+    - "config_file_path"

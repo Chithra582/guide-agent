@@ -1,0 +1,18 @@
+name: "telemetry-metric-streamer"
+description: "Aggregates and dispatches HTTP, TCP, and OS metrics payloads via gRPC."
+input_schema:
+  type: "object"
+  properties:
+    server_address:
+      type: "string"
+      description: "Target management plane gRPC endpoint (host:port)."
+    metrics_types:
+      type: "array"
+      items:
+        type: "string"
+      description: "Categories of metrics to sample (http, os, ssl, upstream)."
+    batch_interval_ms:
+      type: "integer"
+      description: "Aggregation interval in milliseconds."
+  required:
+    - "server_address"
