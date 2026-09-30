@@ -1,22 +1,30 @@
-# Agent Explainability & Transparency Report
+# EXPLAINABILITY — NGINX Infrastructure Agent
 
-- **Agent Name:** nginx-infrastructure-agent
-- **OpenGAP Specification:** 0.1.0
-- **Agent ID:** nginx-infrastructure-agent
-- **Domain:** Developer Tools / Web Infrastructure Management & NGINX Observability
-- **Passport Validation Tier:** Tier-1 Certified Autonomous Agent
+> **Admissibility & Transparency Report for OpenGAP / Agent Passport**  
+> *Agent Name:* NGINX Infrastructure Agent (`nginx-infrastructure-agent`)  
+> *Specification:* OpenGAP v0.1.0  
+> *Domain:* Developer Tools / Web Infrastructure Management & NGINX Observability  
 
 ---
 
-## 1. Overview & Architectural Purpose
+## 1. Overview & Operational Purpose
 
 The **NGINX Infrastructure Agent** (`nginx-infrastructure-agent`) is an autonomous systems management agent designed for managing, configuring, and observing distributed NGINX instances. Operating as a host companion daemon, the agent manages the full lifecycle of NGINX processes, synchronizes configuration trees with centralized management planes (such as F5 NGINX One Console), streams high-frequency telemetry via gRPC, and enforces App Protect security policies.
 
-By embedding automated syntax verification, rollback guards, and directory isolation, the agent guarantees zero downtime and immune infrastructure operations.
+The agent's primary operational purpose is to ensure zero downtime during configuration reloads, validate candidate syntax before applying changes, prevent directory boundary traversal, and deliver real-time infrastructure observability across web tiers.
 
 ---
 
 ## 2. How the Agent Decides (Decision-Making Logic)
+
+NGINX Infrastructure Agent operates across a deterministic, multi-stage infrastructure management decision pipeline:
+
+```
+[Remote Config / Command Request] ──> [Directory Boundary Sentry] ──> [Syntax Pre-flight Check (nginx -t)]
+                                                                                        │
+                                                                                        ▼
+[Structured Audit Log & Telemetry] <── [Zero-Downtime Worker Reload] <── [Atomic Staging File Replacement]
+```
 
 ### 2.1 Remote Configuration Deployment & Syntax Validation
 - **Decision:** Determines whether a received configuration bundle can be safely applied to active NGINX instances.
@@ -51,15 +59,23 @@ By embedding automated syntax verification, rollback guards, and directory isola
 ## 3. Data Sources & Inputs Used
 
 | Data Input | Source | Purpose | Data Handling & Privacy |
-| :--- | :--- | :--- | :--- |
-| NGINX Configuration Files (`.conf`) | Management plane API / Local filesystem | Configures reverse proxy, virtual servers, and upstreams | Validated locally, sensitive directives redacted |
-| Process & System Metrics | Host `/proc` filesystem & NGINX status API | Observes CPU, memory, connection counts, and error rates | Streamed over TLS-encrypted gRPC channels |
-| SSL/TLS Certificates & Keys | Certificate directories (`/etc/ssl/nginx`) | Secures incoming HTTPS connections | Inspected for validity without echoing private keys |
-| NGINX Access & Error Logs | Local log files (`/var/log/nginx/`) | Diagnoses upstream timeouts and HTTP errors | Filtered and summarized, PII stripped |
+|---|---|---|---|
+| **NGINX Configuration Files (`.conf`)** | Management plane API / Local filesystem | Configures reverse proxy, virtual servers, and upstreams | Validated locally, sensitive directives redacted |
+| **Process & System Metrics** | Host `/proc` filesystem & NGINX status API | Observes CPU, memory, connection counts, and error rates | Streamed over TLS-encrypted gRPC channels |
+| **SSL/TLS Certificates & Keys** | Certificate directories (`/etc/ssl/nginx`) | Secures incoming HTTPS connections | Inspected for validity without echoing private keys |
+| **NGINX Access & Error Logs** | Local log files (`/var/log/nginx/`) | Diagnoses upstream timeouts and HTTP errors | Filtered and summarized, PII stripped |
+
+NGINX Infrastructure Agent complies with operational security and privacy standards:
+- **Zero Configuration Downtime:** Pre-flight syntax validation prevents broken configurations from reloading the master process.
+- **Encrypted Control Channels:** All command and metric streams between agent and management plane require mutual TLS (mTLS).
+- **Directory Isolation:** File operations are strictly confined to whitelisted `allowed_directories`.
+- **Right to Terminate:** Local root administrators retain the ability to halt, pause, or kill the agent daemon at any time.
 
 ---
 
 ## 4. Known Limitations & Failure Modes
+
+Reviewers, auditors, and users should note the following operational constraints:
 
 1. **Port Binding Collisions:**
    - *Limitation:* Reloading configurations with new `listen` directives may fail if ports are bound by foreign processes.
@@ -81,7 +97,7 @@ By embedding automated syntax verification, rollback guards, and directory isola
 
 ## 5. Verification, Safety & Human Oversight
 
-- **Strict Pre-Reload Verification:** Zero configuration reloads execute without passing automated syntax verification.
-- **Atomic Rollback Architecture:** Previous configuration state is archived before write operations, allowing instant revert.
-- **Human-in-the-Loop Override:** Local administrators retain root CLI access to kill, restart, or bypass agent actions at any time.
-- **Encrypted Control Channels:** All command and metric streams between agent and management plane require mutual TLS (mTLS).
+- **Real-Time Human Approval Gate:** Remote configuration pushes can be flagged for mandatory administrative review before signal dispatch.
+- **Emergency Session Interrupt:** Sending `SIGTERM` or `SIGINT` to the agent daemon releases file locks and halts monitoring without affecting NGINX workers.
+- **Step Quota Guardrails:** Rollback snapshots are bounded to the last 10 versions ($N \le 10$) to prevent disk saturation.
+- **Structured Audit Logging:** Every configuration change, syntax verification outcome, and process signal is recorded in structured audit logs.
